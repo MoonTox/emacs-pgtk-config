@@ -1,12 +1,13 @@
-(setq inhibit-startup-message t)
-(menu-bar-mode -1)
-(tool-bar-mode -1)
+;;basic ui tweaks that come builtin.
+(setq inhibit-startup-message t)    ;stops the default startup screen from appearing
+(menu-bar-mode -1)    ;;stops menubar, toolbar and scrollbar
+(tool-bar-mode -1)    
 (scroll-bar-mode -1)
 
-(global-display-line-numbers-mode 1)
-(setq-default line-spacing 0.2)
+(global-display-line-numbers-mode 1)  ;;shows line numbers everywhere
+(setq-default line-spacing 0.2)     ;;spacing between lines
 
-(recentf-mode 1)
+(recentf-mode 1)    
 (setq history-length 15)
 (savehist-mode 1)
 (save-place-mode 1)
@@ -69,6 +70,7 @@
 (use-package eglot)
 (add-to-list 'eglot-server-programs '((c++-mode c-mode)))
 (add-hook 'c-mode-hook 'eglot-ensure)
+(add-hook 'c++-mode-hook 'eglot-ensure)
 
 (use-package vertico
   :init
@@ -106,19 +108,17 @@
   (global-corfu-mode))
 
 (use-package kind-icon
-  :ensure t
+  :after corfu
+  :custom
+  (kind-icon-default-face 'corfu-default) ; to compute blended backgrounds correctly
   :config
-  (add-hook 'my-completion-ui-mode-hook
-   	    (lambda ()
-   	      (setq completion-in-region-function
-   		    (kind-icon-enhance-completion
-   		     completion-in-region-function)))))
+  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 
 (require 'org-superstar)
 (add-hook 'org-mode-hook (lambda () (org-superstar-mode 1)))
 (setq sentence-end-double-space nil)
 (setq make-backup-files nil)
-
+(setq delete-by-moving-to-trash t)
 
 (use-package all-the-icons-dired)
 (add-hook 'dired-mode-hook 'all-the-icons-dired-mode)
@@ -134,8 +134,6 @@
 (global-set-key (kbd "C-c o") 'olivetti-mode)
 
 (use-package dashboard
-  :ensure t
-  :diminish (dashboard-mode page-break-lines-mode)
   :config
   (setq dashboard-center-content t)
   (setq dashboard-startup-banner 'logo)
@@ -150,7 +148,7 @@
 (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
 
 (solaire-global-mode)
-(global-set-key (kbd "C-c t h") 'org-insert-todo-heading)
+(global-set-key (kbd "C-c i t") 'org-insert-todo-heading)
 
 
 ;;(page-break-lines-mode 1)
@@ -165,8 +163,26 @@
 
 (setq org-agenda-files '("~/Library/org/agenda.org"
 			 "~/Library/org/university.org"
+			 "~/Library/org/programming.org"
 			 "~/Library/org/books.org"))
 (setq org-ellipsis " ▼")
+(setq org-display-custom-times t)
+(setq org-time-stamp-custom-formats '("<%d-%m-%Y %a>" . "<%d-%m-%Y %a %H:%M>"))
+
+;;spell checking with aspell
+(setq ispell-program-name "aspell")   ;;apt install aspell
+(setq ispell-dictionary "english")
+
+(dolist (hook '(org-mode-hook))
+  (add-hook hook (lambda () (flyspell-mode 1))))
+
+(eval-after-load "flyspell"
+  '(progn
+     (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
+     (define-key flyspell-mouse-map [mouse-3] #'undefined)))
+
+(add-hook 'after-init-hook #'flymake-mode)
+
 (use-package doom-themes
   :ensure t
   :config
@@ -196,6 +212,9 @@
   :font "Rec Mono Casual"
   :height 110
   :weight 'regular)
+(set-fontset-font "fontset-default" 'bengali
+		  (font-spec :family "Hind Siliguri"
+			     :size 16))
 ;; Makes commented text and keywords italics.
 ;; This is working in emacsclient but not emacs.
 ;; Your font must have an italic face available.
@@ -209,6 +228,11 @@
 (add-hook 'org-mode-hook 'turn-on-auto-fill)
 (add-hook 'markdown-mode-hook 'turn-on-auto-fill)
 (setq-default fill-column 80)
+
+(defun set-org-sentence-end ()
+  (setq-local sentence-end "\\(.।\\)"))
+(add-hook 'org-mode-hook 'set-org-sentence-end)
+
 
 ;; Needed if using emacsclient. Otherwise, your fonts will be smaller than expected.
 ;;(add-to-list 'default-frame-alist '(font . "Source Code Pro-11"))
