@@ -8,13 +8,10 @@
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
 (package-initialize)
 
+;; for versions before 28.1
 ;; (unless (package-installed-p 'use-package)
 ;;   (package-refresh-contents)
 ;;   (package-install 'use-package))
-
-(eval-and-compile
-  (setq use-package-always-ensure t    ;; mepasns we don't have to do ":ensure t" for every package
-	use-package-expand-minimally t))    ;; check docs
 
 (use-package sudo-edit)    ;;allows editing in root directory
 				
@@ -42,8 +39,9 @@
 
 (use-package eglot)
 (add-to-list 'eglot-server-programs '((c++-mode c-mode)))
-(add-hook 'c-mode-hook 'eglot-ensure)
+;;(add-hook 'c-mode-hook 'eglot-ensure)
 (add-hook 'c++-mode-hook 'eglot-ensure)
+(add-hook 'java-mode-hook 'eglot-ensure)
 
 (use-package eglot-java)
 (add-hook 'java-mode-hook 'eglot-java-mode)
@@ -55,13 +53,15 @@
   (define-key eglot-java-mode-map (kbd "C-c l T") #'eglot-java-project-build-task)
   (define-key eglot-java-mode-map (kbd "C-c l R") #'eglot-java-project-build-refresh)))
 
+
 (use-package vertico
+  :ensure t
   :init
   (vertico-mode)
-  (setq vertico-scroll-margin 0) ;;scroll margin
-  (setq vertico-count 10) ;;vertico candidates number
-  (setq vertico-resize t) ;;resize the vertico minibuffer
-(setq vertico-cycle t))   ;;minibuffer options are cyclical
+  (setq vertico-scroll-margin 0) ;; scroll margin
+  (setq vertico-count 10) ;; vertico candidates number
+  (setq vertico-resize t) ;; resize the vertico minibuffer
+(setq vertico-cycle t))   ;; minibuffer options are cyclical
 
 (use-package vertico-directory    ;; Configure directory extension
   :after vertico
@@ -86,61 +86,59 @@
   ("M-g f" . consult-flymake)    ;; flymake view like on IDEs
   ("M-g g" . consult-goto-line)    ;; goto line number
   ("M-s d" . consult-find)    ;; fuzzy find file
-  ("M-s r" . consult-ripgrep)    ;; ripgrep?
-  ("M-s l" . consult-line))    ;; better C-s search
+  ("M-s r" . consult-ripgrep))    ;; ripgrep?
+;;  ("M-s l" . consult-line))    ;; better C-s search
 
+(global-set-key (kbd "C-s") 'consult-line)
 (global-set-key (kbd "C-x a f") 'affe-find)
 	     
 (use-package corfu    ;; completion ui
   :custom
   (corfu-cycle t)    ;; cycles the completion options
   (corfu-auto t)    ;; autocompletion
+  (corfu-popupinfo-mode t)
   (corfu-min-width 30)    ;; ui minimum width for 30 chars
   (corfu-scroll-margin 5)    ;; scroll margin
-  (corfu-history-mode t)    ;; saves comp. option history
+;;  (corfu-history-mode t)    ;; saves comp. option history
   :init
   (global-corfu-mode))
 
+(use-package highlight-indent-guides
+  :config
+  (add-hook 'prog-mode-hook 'highlight-indent-guides-mode))
+
+
 (add-hook 'org-mode-hook (lambda ()
 			   (setq-local sentence-end-double-space nil)))    ;; disables double space end in org mode
-(setq make-backup-files nil)    ;; stops making temporary backup files
+;;(setq make-backup-files nil)    ;; stops making temporary backup files
 (setq delete-by-moving-to-trash t)    ;; sends deleted items to trash instead of permanent delete
 
-(use-package emacs
-:init
-(setq completion-cycle-threshold 3)
-(setq tab-always-indent 'complete))
+;; (use-package emacs
+;; :init
+;; (setq completion-cycle-threshold 3)
+;; (setq tab-always-indent 'complete))
+
+;; (use-package benchmark-init
+;;   :ensure t
+;;   :config
+;;   ;; To disable collection of benchmark data after init is done.
+;;   (add-hook 'after-init-hook 'benchmark-init/deactivate))
 
 (setq native-comp-async-report-warnings-errors nil)    ;; hides the error reports for nativecomp build
-(global-set-key (kbd "C-c i t") 'org-insert-todo-heading)    ;; insert todo heading, easier than switching
+
 
 (global-page-break-lines-mode)    ;;draws seamless horizontal lines
+;;(setq frame-title-format nil)
 
- ;; (use-package gcmh    ;; Using garbage magic hack.
- ;;    :config
-;;    (gcmh-mode 1))
+;;(setq frame-resize-pixelwise t)
 
+(use-package gcmh    ;; Using garbage magic hack
+    :config
+   (gcmh-mode 1))
 
 (setq gc-cons-threshold 402653184    ;;  Setting garbage collection threshold
       gc-cons-percentage 0.6)
 
-(setq org-agenda-files '("~/Library/org/agenda.org"    ;;  org agenda files list
-			 "~/Library/org/university.org"
-			 "~/Library/org/programming.org"
-			 "~/Library/org/books.org"))
-(setq org-display-custom-times t)
-(setq org-time-stamp-custom-formats '("<%d-%m-%Y %a>" . "<%d-%m-%Y %a %H:%M>"))   ;;  native date format
-
-(setq ispell-program-name "aspell")   ;; spell checking with aspell
-(setq ispell-dictionary "english")    ;;  english dictionary for aspell
-
-(dolist (hook '(org-mode-hook))    ;;  spell checker
-  (add-hook hook (lambda () (flyspell-mode 1))))
-
-(eval-after-load "flyspell"
-  '(progn
-     (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)    ;; correction of words using two-finger tap
-     (define-key flyspell-mouse-map [mouse-3] #'undefined)))
 
 (add-hook 'after-init-hook #'flymake-mode)
 
@@ -149,32 +147,20 @@
   ;;  Global settings (defaults)
   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
         doom-themes-enable-italic t) ; if nil, italics is universally disabled
-  (load-theme 'catppuccin t)    ;; loads catppuccin
+  (load-theme 'doom-palenight t)    ;; loads catppuccin
   (doom-themes-visual-bell-config)      ;;  Enable flashing mode-line on errors
- (setq catppuccin-flavor 'macchiato)    ;; says it already
-  (catppuccin-reload)     ;; reloads the macchiato variant, shit
-  ;;  Corrects (and improves) org-mode's native fontification.
+ ;; (setq catppuccin-flavor 'macchiato)    ;; says it already
+ ;;  (catppuccin-reload)     ;; reloads the macchiato variant, shit
 (doom-themes-org-config))    ;; that's why I use this bloat
 (solaire-global-mode)    ;; darkens some area
 
 (use-package olivetti)    ;; centers the buffer
-(global-set-key (kbd "C-c o") 'olivetti-mode)    ;; olivetti-mode shortcut
+(global-set-key (kbd "C-c o v") 'olivetti-mode)    ;; olivetti-mode shortcut
 
 (set-face-attribute 'default nil    ;; default type face
   :font "Rec Mono Custom"           ;; with attributes
   :height 110
   :weight 'regular)
-(set-face-attribute 'variable-pitch nil    ;; non monospace sans font
-  :font "Recursive Casual"
-  :height 110
-  :weight 'regular)
-(set-face-attribute 'fixed-pitch nil     ;; maybe documantation font
-  :font "Rec Mono Casual"
-  :height 110
-  :weight 'regular)
-(set-fontset-font "fontset-default" 'bengali    ;; bengali font
-		  (font-spec :family "Hind Siliguri"
-			     :size 16))
 
 (set-face-attribute 'font-lock-comment-face nil    ;;  Makes commented text and keywords italics
   :slant 'italic)                                   ;;  font must have italic faces
@@ -182,23 +168,11 @@
 		    :slant 'italic)
 
 (setq-default line-spacing 0.12)    ;;  line spacing
-(add-hook 'org-mode-hook 'turn-on-auto-fill)    ;;  auto setting of paragraphs
 (add-hook 'markdown-mode-hook 'turn-on-auto-fill)    ;;  in markdown mode also
 (setq-default fill-column 80)    ;;  paragraph column size 80 chars
 
 ;;  Needed if using emacsclient. Otherwise fonts will be smaller than expected.
 ;; (add-to-list 'default-frame-alist '(font . "Rec Mono Custom-11"))
-
-(defun my-pretty-symbols ()    ;;  changes certain keywords to symbols
-  (setq prettify-symbols-alist
-        '(("#+title" . "🌟")
-          ("#+author" . "👤")
-          ("#+date" . "📅")))
-  (prettify-symbols-mode 1))
-
-(add-hook 'org-mode-hook 'my-pretty-symbols)
-
-(use-package markdown-mode)
 
 (use-package doom-modeline    ;;  fancy modeline
 :config
@@ -215,7 +189,7 @@
 (menu-bar-mode -1)    ;; stops menubar, toolbar and scrollbar
 (tool-bar-mode -1)    
 (scroll-bar-mode -1)
-(add-to-list 'default-frame-alist '(fullscreen . maximized))    ;; starts in fullscreen
+;;(add-to-list 'default-frame-alist '(fullscreen . maximized))    ;; starts in fullscreen
 
 (global-display-line-numbers-mode 1)  ;; shows line numbers everywhere
 (setq-default line-spacing 0.2)     ;; spacing between lines
@@ -228,14 +202,9 @@
   :init
   (all-the-icons-completion-mode))
 
-(global-hl-line-mode 1)
+(add-hook 'prog-mode-hook 'hl-line-mode)
 (pixel-scroll-precision-mode)  ;; smooth scrolling :0
 
-(setq org-emphasis-alist   ;; emphasize bold, italic, underline
-      '(("*" bold)
-	("/" italic)
-	("-" underline)))
-(setq org-ellipsis " ▼")    ;; replace triple dots with symbol
 
 (use-package kind-icon    ;; corfu icons
   :after corfu
@@ -244,11 +213,20 @@
   :config
   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 
-(use-package org-superstar)    ;; fancy org heading icons
-(add-hook 'org-mode-hook 'org-superstar-mode-hook)
 
 (use-package all-the-icons-dired)     ;; icons for dired
 (add-hook 'dired-mode-hook 'all-the-icons-dired-mode)
+(add-hook 'dired-mode-hook 'dired-git-mode)
+(use-package dired-sidebar
+  :bind (("C-x C-n" . dired-sidebar-toggle-sidebar))
+  :commands (dired-sidebar-toggle-sidebar)
+  :init
+  (add-hook 'dired-sidebar-mode-hook
+            (lambda ()
+              (unless (file-remote-p default-directory)
+                (auto-revert-mode)))))
+
+(setq inhibit-compacting-font-caches t)
 
 (use-package dashboard
   :init
@@ -258,15 +236,91 @@
   (setq dashboard-startup-banner "~/.emacs.d/xemacs_color.svg")    ;; dashboard image
   (setq dashboard-banner-logo-title "Welcome to Emacs")    ;; welcome message
   (setq dashboard-items '((bookmarks . 3)    ;; items
-			  (agenda . 5)))
+			  (recents . 3)))
+  (setq dashboard-display-icons-p t)
   (setq dashboard-modify-heading-icons '((bookmarks . "book")    ;; items icons
 				    (agenda . "calendar")))
   ;; footer
   (setq dashboard-set-footer t
 	dashboard-footer-icon
 	(all-the-icons-fileicon "emacs"
-				:height 1
+       				:height 1
 				:v-adjust -0.1
 				:face 'font-lock-string-face))
   (dashboard-setup-startup-hook))
 (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))    ;; init buffer
+
+(setq org-agenda-span 'month)    ;; views org agenda for the whole month
+
+(setq org-todo-keywords    ;; todo list keywords
+      '((sequence "TODO" "NEXT" "|" "DONE")))    ;; done is the separated state
+(global-set-key (kbd "C-c o a") 'org-agenda-list)
+(global-set-key (kbd "C-c o t") 'org-todo-list)
+;; Move "DONE" items to the bottom of the agenda
+(setq org-agenda-sorting-strategy
+      '((agenda todo-state-up priority-down category-keep)
+        (todo priority-down category-keep)
+        (tags priority-down category-keep)
+        (search category-keep)))
+
+(global-set-key (kbd "C-c i t") 'org-insert-todo-heading)    ;; insert todo heading, easier than switching
+
+(setq org-agenda-files '("~/Library/org/agenda.org"    ;;  org agenda files list
+			 "~/Library/org/university.org"
+			 "~/Library/org/programming.org"
+			 "~/Library/org/books.org"))
+(setq org-agenda-include-diary nil)    ;; exclude the holiday shit
+
+(setq ispell-program-name "aspell")   ;; spell checking with aspell
+(setq ispell-dictionary "english")    ;;  english dictionary for aspell
+
+(dolist (hook '(org-mode-hook))    ;;  spell checker
+  (add-hook hook (lambda () (flyspell-mode 1))))
+
+(eval-after-load "flyspell"
+  '(progn
+     (define-key flyspell-mouse-map [down-mouse-3] 'flyspell-correct-word)    ;; correction of words using two-finger tap
+     (define-key flyspell-mouse-map [mouse-3] 'undefined)))
+
+(set-face-attribute 'variable-pitch nil    ;; non monospace sans font
+  :font "Recursive Casual"
+  :height 110
+  :weight 'regular)
+(set-face-attribute 'fixed-pitch nil     ;; maybe documantation font
+  :font "Rec Mono Casual"
+  :height 110
+  :weight 'regular)
+(set-fontset-font "fontset-default" 'bengali    ;; bengali font
+		  (font-spec :family "Hind Siliguri"
+			     :size 16))
+
+(add-hook 'org-mode-hook 'turn-on-auto-fill)    ;;  auto setting of paragraphs
+(defun my-pretty-symbols ()    ;;  changes certain keywords to symbols
+  (setq prettify-symbols-alist
+        '(("#+title" . "🌟")
+          ("#+author" . "👤")
+          ("#+date" . "📅")
+	  ("#+begin_quote" . "❝")
+	  ("#+end_quote" . "❝")))
+	  ;; ("#+begin_src" . "🛈")
+	  ;; ("#+end_src" . "🛈")))
+  (prettify-symbols-mode 1))
+
+
+
+(add-hook 'org-mode-hook 'my-pretty-symbols)
+
+(use-package markdown-mode
+  :defer t)
+
+(setq org-emphasis-alist   ;; emphasize bold, italic, underline
+      '(("*" bold)
+	("/" italic)
+	("_" underline)))
+(setq org-hide-emphasis-markers t)    ;; hide emphasis markers
+(setq org-ellipsis " ▼")    ;; replace triple dots with symbol
+(setq org-fontify-quote-and-verse-blocks t)
+
+(use-package org-superstar     ;; fancy org heading icons
+:config
+(add-hook 'org-mode-hook 'org-superstar-mode))
